@@ -988,11 +988,77 @@
             }
         }
 
+        // 원료/생산품 데이터 동적 생성
+        function initializeData() {
+            // 원료 데이터 생성
+            const rawMaterialsContainer = document.getElementById('raw_materials_container');
+            const productsContainer = document.getElementById('products_container');
+            
+            // 기본 원료 데이터
+            const rawMaterials = [
+                { name: '나프타', unit: 'MT', price: 500000, quantity: 1000 },
+                { name: 'LPG', unit: 'MT', price: 400000, quantity: 500 },
+                { name: '에탄', unit: 'MT', price: 300000, quantity: 300 }
+            ];
+            
+            // 기본 생산품 데이터
+            const products = [
+                { name: '에틸렌', unit: 'MT', price: 800000, quantity: 800 },
+                { name: '프로필렌', unit: 'MT', price: 700000, quantity: 600 },
+                { name: '부타디엔', unit: 'MT', price: 900000, quantity: 200 }
+            ];
+            
+            // 원료 데이터 추가
+            rawMaterials.forEach((material, index) => {
+                const row = createItemRow('raw_materials', material, index);
+                rawMaterialsContainer.appendChild(row);
+            });
+            
+            // 생산품 데이터 추가
+            products.forEach((product, index) => {
+                const row = createItemRow('products', product, index);
+                productsContainer.appendChild(row);
+            });
+        }
+        
+        // 아이템 행 생성 함수
+        function createItemRow(type, item, index) {
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.innerHTML = `
+                <div class="item-name">
+                    <input type="text" value="${item.name}" placeholder="이름">
+                </div>
+                <div class="item-unit">
+                    <input type="text" value="${item.unit}" placeholder="단위">
+                </div>
+                <div class="item-price">
+                    <input type="number" value="${item.price}" placeholder="가격">
+                </div>
+                <div class="item-quantity">
+                    <input type="number" value="${item.quantity}" placeholder="수량">
+                </div>
+                <div class="item-total">
+                    <span>${(item.price * item.quantity).toLocaleString()}</span>
+                </div>
+                <div class="item-actions">
+                    <button onclick="removeItem(this, '${type}')">삭제</button>
+                </div>
+            `;
+            
+            // 이벤트 리스너 설정
+            setupItemEventListeners(row);
+            return row;
+        }
+
         // 이벤트 리스너 설정
         document.addEventListener('DOMContentLoaded', function() {
             setupSliders();
             updateDebtRatio();
             calculateWACC();
+            
+            // 데이터 초기화
+            initializeData();
             
             // 기존 항목들에 이벤트 리스너 설정
             document.querySelectorAll('#raw_materials_container .item-row, #products_container .item-row').forEach(row => {
