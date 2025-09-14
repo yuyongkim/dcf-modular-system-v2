@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>석유화학 DCF 가치평가 시스템</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .section h3 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+        .col {
+            flex: 1;
+        }
+        .item-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .item-row input, .item-row select {
+            flex: 1;
+        }
+        .remove-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .add-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .slider-container {
+            margin: 20px 0;
+        }
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+        .slider-value {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            display: none;
+        }
+        .metric {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .decision {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .decision.recommend {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+        .decision.not-recommend {
+            background: #fadbd8;
+            color: #e74c3c;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        .chart-container {
+            margin: 20px 0;
+            height: 400px;
+        }
+        .sensitivity-section {
+            margin-top: 30px;
+        }
+        .export-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .export-btn {
+            background: #f39c12;
+        }
+        .export-btn:hover {
+            background: #e67e22;
+        }
+        
+        .header-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .header-links {
+            margin-top: 15px;
+        }
+        
+        .excel-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .excel-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+                       <div class="header-section">
+                   <h1>🏭 석유화학 DCF 가치평가 시스템</h1>
+                   <div class="header-links">
+                       <a href="/excel-dashboard" class="excel-link">📊 엑셀 다중 탭 대시보드</a>
+                       <a href="/price-db" class="excel-link">💰 가격 DB 관리</a>
+                   </div>
+               </div>
+        
+        <div class="section">
+            <h3>💰 WACC 계산</h3>
+            <div class="row">
+                <div class="col">
+                    <div class="slider-container">
+                        <label>자기자본비율 (%)</label>
+                        <input type="range" id="equity_ratio" min="20" max="90" value="60" class="slider">
+                        <div class="slider-value" id="equity_ratio_value">60%</div>
+                    </div>
+                    <div class="slider-container">
+                        <label>자기자본비용 (%)</label>
+                        <input type="range" id="cost_of_equity" min="8" max="20" value="12" step="0.1" class="slider">
+                        <div class="slider-value" id="cost_of_equity_value">12.0%</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="slider-container">
+                        <label>부채비율 (%)</label>
+                        <input type="range" id="debt_ratio" min="10" max="80" value="40" class="slider" readonly>
+                        <div class="slider-value" id="debt_ratio_value">40%</div>
+                    </div>
+                    <div class="slider-container">
+                        <label>타인자본비용 (%)</label>
+                        <input type="range" id="cost_of_debt" min="2" max="10" value="5" step="0.1" class="slider">
+                        <div class="slider-value" id="cost_of_debt_value">5.0%</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="slider-container">
+                        <label>법인세율 (%)</label>
+                        <input type="range" id="tax_rate" min="15" max="35" value="25" step="0.1" class="slider">
+                        <div class="slider-value" id="tax_rate_value">25.0%</div>
+                    </div>
+                    <div class="form-group">
+                        <label>WACC (%)</label>
+                        <input type="number" id="wacc_display" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🏭 프로젝트 정보</h3>
+            <div class="row">
+                <div class="col">
+                    <div class="slider-container">
+                        <label>초기 투자액 (억원)</label>
+                        <input type="range" id="initial_investment" min="100" max="10000" value="1000" step="100" class="slider">
+                        <div class="slider-value" id="initial_investment_value">1,000억원</div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="slider-container">
+                        <label>운영기간 (년)</label>
+                        <input type="range" id="operating_years" min="10" max="25" value="15" class="slider">
+                        <div class="slider-value" id="operating_years_value">15년</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>⛽ 원료 입력</h3>
+            <div id="raw_materials_container">
+                <div class="item-row">
+                    <select class="raw-category">
+                        <option value="">카테고리 선택</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="raw-product">
+                        <option value="">제품 선택</option>
+                    </select>
+                    <input type="number" class="raw-quantity" placeholder="연간 수량 (MT)" value="12000">
+                    <input type="number" class="raw-price" placeholder="현재 가격 ($)" readonly>
+                    <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+                </div>
+            </div>
+            <button type="button" class="add-btn" onclick="addRawMaterial()">+ 원료 추가</button>
+        </div>
+
+        <div class="section">
+            <h3>🏭 생산품 입력</h3>
+            <div id="products_container">
+                <div class="item-row">
+                    <select class="prod-category">
+                        <option value="">카테고리 선택</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="prod-product">
+                        <option value="">제품 선택</option>
+                    </select>
+                    <input type="number" class="prod-quantity" placeholder="연간 수량 (MT)" value="10200">
+                    <input type="number" class="prod-price" placeholder="현재 가격 ($)" readonly>
+                    <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+                </div>
+            </div>
+            <button type="button" class="add-btn" onclick="addProduct()">+ 생산품 추가</button>
+        </div>
+
+        <div class="section">
+            <h3>💸 비용 구조</h3>
+            <div class="row">
+                <div class="col">
+                    <h4>고정비 (백만원/년)</h4>
+                    <div id="fixed_costs_container">
+                        <div class="item-row">
+                            <input type="text" class="fixed-name" placeholder="비용명" value="인건비">
+                            <input type="number" class="fixed-amount" placeholder="금액" value="2000">
+                            <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addFixedCost()">+ 고정비 추가</button>
+                </div>
+                <div class="col">
+                    <h4>변동비 (원/MT)</h4>
+                    <div id="variable_costs_container">
+                        <div class="item-row">
+                            <input type="text" class="variable-name" placeholder="비용명" value="전력비">
+                            <input type="number" class="variable-amount" placeholder="금액" value="50">
+                            <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addVariableCost()">+ 변동비 추가</button>
+                </div>
+                <div class="col">
+                    <h4>유틸리티</h4>
+                    <div id="utility_costs_container">
+                        <div class="item-row">
+                            <input type="text" class="utility-name" placeholder="유틸리티명" value="전력">
+                            <input type="number" class="utility-usage" placeholder="사용량" value="6000">
+                            <input type="number" class="utility-price" placeholder="단가" value="120">
+                            <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addUtilityCost()">+ 유틸리티 추가</button>
+                </div>
+                <div class="col">
+                    <h4>정비비 (백만원/년)</h4>
+                    <div id="maintenance_costs_container">
+                        <div class="item-row">
+                            <input type="text" class="maintenance-name" placeholder="비용명" value="정기보수">
+                            <input type="number" class="maintenance-amount" placeholder="금액" value="800">
+                            <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addMaintenanceCost()">+ 정비비 추가</button>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="calculateDCF()">🧮 DCF 계산</button>
+
+        <div class="loading" id="loading">
+            <p>계산 중입니다...</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="decision" id="decision"></div>
+            
+            <div style="text-align: center;">
+                <div class="metric">
+                    <div class="metric-value" id="npv_value">-</div>
+                    <div class="metric-label">NPV (백만원)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="irr_value">-</div>
+                    <div class="metric-label">IRR (%)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="payback_value">-</div>
+                    <div class="metric-label">회수기간 (년)</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="fcf_value">-</div>
+                    <div class="metric-label">연간 FCF (백만원)</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h3>📊 재무 요약</h3>
+                <div class="row">
+                    <div class="col">
+                        <h4>수익성 지표 (백만원/년)</h4>
+                        <p><strong>연간 매출:</strong> <span id="revenue_value">-</span></p>
+                        <p><strong>EBITDA:</strong> <span id="ebitda_value">-</span></p>
+                        <p><strong>EBIT:</strong> <span id="ebit_value">-</span></p>
+                        <p><strong>NOPAT:</strong> <span id="nopat_value">-</span></p>
+                    </div>
+                    <div class="col">
+                        <h4>비용 구조 (백만원/년)</h4>
+                        <p><strong>원료비:</strong> <span id="raw_costs_value">-</span></p>
+                        <p><strong>고정비:</strong> <span id="fixed_costs_value">-</span></p>
+                        <p><strong>변동비:</strong> <span id="variable_costs_value">-</span></p>
+                        <p><strong>유틸리티:</strong> <span id="utility_costs_value">-</span></p>
+                        <p><strong>정비비:</strong> <span id="maintenance_costs_value">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sensitivity-section">
+                <h3>📈 민감도 분석</h3>
+                <div class="row">
+                    <div class="col">
+                        <h4>원료가격 민감도</h4>
+                        <div class="chart-container">
+                            <canvas id="priceSensitivityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h4>생산량 민감도</h4>
+                        <div class="chart-container">
+                            <canvas id="quantitySensitivityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <h4>WACC 민감도</h4>
+                        <div class="chart-container">
+                            <canvas id="waccSensitivityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="export-section">
+                <button class="export-btn" onclick="exportToExcel()">📊 엑셀로 내보내기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentResults = null;
+        let charts = {};
+
+        // 슬라이더 이벤트 리스너
+        function setupSliders() {
+            const sliders = document.querySelectorAll('.slider');
+            sliders.forEach(slider => {
+                slider.addEventListener('input', function() {
+                    updateSliderValue(this);
+                    if (this.id === 'equity_ratio') {
+                        updateDebtRatio();
+                    }
+                    calculateWACC();
+                });
+            });
+        }
+
+        function updateSliderValue(slider) {
+            const valueDisplay = document.getElementById(slider.id + '_value');
+            if (valueDisplay) {
+                let value = slider.value;
+                if (slider.id === 'initial_investment') {
+                    valueDisplay.textContent = value + '억원';
+                } else if (slider.id === 'operating_years') {
+                    valueDisplay.textContent = value + '년';
+                } else {
+                    valueDisplay.textContent = value + '%';
+                }
+            }
+        }
+
+        function updateDebtRatio() {
+            const equityRatio = parseFloat(document.getElementById('equity_ratio').value);
+            const debtRatio = 100 - equityRatio;
+            document.getElementById('debt_ratio').value = debtRatio;
+            updateSliderValue(document.getElementById('debt_ratio'));
+        }
+
+        // WACC 계산
+        function calculateWACC() {
+            const equityRatio = parseFloat(document.getElementById('equity_ratio').value);
+            const debtRatio = parseFloat(document.getElementById('debt_ratio').value);
+            const costOfEquity = parseFloat(document.getElementById('cost_of_equity').value);
+            const costOfDebt = parseFloat(document.getElementById('cost_of_debt').value);
+            const taxRate = parseFloat(document.getElementById('tax_rate').value);
+
+            const wacc = (equityRatio/100 * costOfEquity/100) + 
+                        ((debtRatio/100 * costOfDebt/100) * (1 - taxRate/100));
+            
+            document.getElementById('wacc_display').value = (wacc * 100).toFixed(1);
+        }
+
+        // 항목 추가/삭제 함수들
+        function addRawMaterial() {
+            const container = document.getElementById('raw_materials_container');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <select class="raw-category">
+                    <option value="">카테고리 선택</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+                <select class="raw-product">
+                    <option value="">제품 선택</option>
+                </select>
+                <input type="number" class="raw-quantity" placeholder="연간 수량 (MT)" value="12000">
+                <input type="number" class="raw-price" placeholder="현재 가격 ($)" readonly>
+                <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+            `;
+            container.appendChild(newRow);
+            setupItemEventListeners(newRow);
+        }
+
+        function addProduct() {
+            const container = document.getElementById('products_container');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <select class="prod-category">
+                    <option value="">카테고리 선택</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+                <select class="prod-product">
+                    <option value="">제품 선택</option>
+                </select>
+                <input type="number" class="prod-quantity" placeholder="연간 수량 (MT)" value="10200">
+                <input type="number" class="prod-price" placeholder="현재 가격 ($)" readonly>
+                <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+            `;
+            container.appendChild(newRow);
+            setupItemEventListeners(newRow);
+        }
+
+        function addFixedCost() {
+            const container = document.getElementById('fixed_costs_container');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <input type="text" class="fixed-name" placeholder="비용명" value="새 고정비">
+                <input type="number" class="fixed-amount" placeholder="금액" value="1000">
+                <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function addVariableCost() {
+            const container = document.getElementById('variable_costs_container');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <input type="text" class="variable-name" placeholder="비용명" value="새 변동비">
+                <input type="number" class="variable-amount" placeholder="금액" value="30">
+                <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function addUtilityCost() {
+            const container = document.getElementById('utility_costs_container');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <input type="text" class="utility-name" placeholder="유틸리티명" value="새 유틸리티">
+                <input type="number" class="utility-usage" placeholder="사용량" value="1000">
+                <input type="number" class="utility-price" placeholder="단가" value="100">
+                <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function addMaintenanceCost() {
+            const container = document.getElementById('maintenance_costs_container');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <input type="text" class="maintenance-name" placeholder="비용명" value="새 정비비">
+                <input type="number" class="maintenance-amount" placeholder="금액" value="500">
+                <button type="button" class="remove-btn" onclick="removeItem(this)">삭제</button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function removeItem(button) {
+            const row = button.parentElement;
+            if (row.parentElement.children.length > 1) {
+                row.remove();
+            }
+        }
+
+        function setupItemEventListeners(row) {
+            const categorySelect = row.querySelector('.raw-category, .prod-category');
+            const productSelect = row.querySelector('.raw-product, .prod-product');
+            const priceInput = row.querySelector('.raw-price, .prod-price');
+
+            if (categorySelect) {
+                categorySelect.addEventListener('change', function() {
+                    updateProducts(this, productSelect, priceInput);
+                });
+            }
+
+            if (productSelect) {
+                productSelect.addEventListener('change', function() {
+                    updatePrice(categorySelect, this, priceInput);
+                });
+            }
+        }
+
+        // 카테고리 변경 시 제품 목록 업데이트
+        async function updateProducts(categorySelect, productSelect, priceInput) {
+            const category = categorySelect.value;
+            if (!category) return;
+
+            try {
+                const response = await fetch(`/api/products/${category}`);
+                const products = await response.json();
+                
+                productSelect.innerHTML = '<option value="">제품을 선택하세요</option>';
+                products.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product;
+                    option.textContent = product;
+                    productSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('제품 목록 로드 실패:', error);
+            }
+        }
+
+        // 제품 변경 시 가격 업데이트
+        async function updatePrice(categorySelect, productSelect, priceInput) {
+            const category = categorySelect.value;
+            const product = productSelect.value;
+            if (!category || !product) return;
+
+            try {
+                const response = await fetch(`/api/price/${category}/${product}`);
+                const data = await response.json();
+                priceInput.value = data.price.toFixed(1);
+            } catch (error) {
+                console.error('가격 로드 실패:', error);
+            }
+        }
+
+        // DCF 계산
+        async function calculateDCF() {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                // 데이터 수집
+                const data = collectFormData();
+                
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentResults = result;
+                    displayResults(result);
+                    createSensitivityCharts(result.sensitivity);
+                } else {
+                    alert('계산 실패: ' + result.error);
+                }
+            } catch (error) {
+                alert('계산 중 오류가 발생했습니다: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function collectFormData() {
+            // WACC 데이터
+            const equityRatio = parseFloat(document.getElementById('equity_ratio').value);
+            const debtRatio = parseFloat(document.getElementById('debt_ratio').value);
+            const costOfEquity = parseFloat(document.getElementById('cost_of_equity').value);
+            const costOfDebt = parseFloat(document.getElementById('cost_of_debt').value);
+            const taxRate = parseFloat(document.getElementById('tax_rate').value);
+
+            // 프로젝트 데이터
+            const initialInvestment = parseFloat(document.getElementById('initial_investment').value);
+            const operatingYears = parseInt(document.getElementById('operating_years').value);
+
+            // 원료 데이터
+            const rawMaterials = [];
+            document.querySelectorAll('#raw_materials_container .item-row').forEach(row => {
+                const category = row.querySelector('.raw-category').value;
+                const product = row.querySelector('.raw-product').value;
+                const quantity = parseFloat(row.querySelector('.raw-quantity').value);
+                if (category && product && quantity) {
+                    rawMaterials.push({ category, product, quantity });
+                }
+            });
+
+            // 생산품 데이터
+            const products = [];
+            document.querySelectorAll('#products_container .item-row').forEach(row => {
+                const category = row.querySelector('.prod-category').value;
+                const product = row.querySelector('.prod-product').value;
+                const quantity = parseFloat(row.querySelector('.prod-quantity').value);
+                if (category && product && quantity) {
+                    products.push({ category, product, quantity });
+                }
+            });
+
+            // 비용 데이터
+            const fixedCosts = [];
+            document.querySelectorAll('#fixed_costs_container .item-row').forEach(row => {
+                const name = row.querySelector('.fixed-name').value;
+                const amount = parseFloat(row.querySelector('.fixed-amount').value);
+                if (name && amount) {
+                    fixedCosts.push({ name, amount });
+                }
+            });
+
+            const variableCosts = [];
+            document.querySelectorAll('#variable_costs_container .item-row').forEach(row => {
+                const name = row.querySelector('.variable-name').value;
+                const amount = parseFloat(row.querySelector('.variable-amount').value);
+                if (name && amount) {
+                    variableCosts.push({ name, amount });
+                }
+            });
+
+            const utilityCosts = [];
+            document.querySelectorAll('#utility_costs_container .item-row').forEach(row => {
+                const name = row.querySelector('.utility-name').value;
+                const usage = parseFloat(row.querySelector('.utility-usage').value);
+                const price = parseFloat(row.querySelector('.utility-price').value);
+                if (name && usage && price) {
+                    utilityCosts.push({ name, usage, price });
+                }
+            });
+
+            const maintenanceCosts = [];
+            document.querySelectorAll('#maintenance_costs_container .item-row').forEach(row => {
+                const name = row.querySelector('.maintenance-name').value;
+                const amount = parseFloat(row.querySelector('.maintenance-amount').value);
+                if (name && amount) {
+                    maintenanceCosts.push({ name, amount });
+                }
+            });
+
+            return {
+                equity_ratio: equityRatio,
+                debt_ratio: debtRatio,
+                cost_of_equity: costOfEquity,
+                cost_of_debt: costOfDebt,
+                tax_rate: taxRate,
+                initial_investment: initialInvestment,
+                operating_years: operatingYears,
+                raw_materials: rawMaterials,
+                products: products,
+                fixed_costs: fixedCosts,
+                variable_costs: variableCosts,
+                utility_costs: utilityCosts,
+                maintenance_costs: maintenanceCosts
+            };
+        }
+
+        // 결과 표시
+        function displayResults(result) {
+            const results = document.getElementById('results');
+            const decision = document.getElementById('decision');
+            
+            // 투자 결정
+            decision.textContent = result.decision;
+            decision.className = `decision ${result.is_viable ? 'recommend' : 'not-recommend'}`;
+            
+            // 핵심 지표
+            document.getElementById('npv_value').textContent = result.results.npv.toLocaleString();
+            document.getElementById('irr_value').textContent = result.results.irr ? (result.results.irr * 100).toFixed(1) : 'N/A';
+            document.getElementById('payback_value').textContent = result.results.payback_period || 'N/A';
+            document.getElementById('fcf_value').textContent = result.results.annual_fcf.toLocaleString();
+            
+            // 재무 요약
+            document.getElementById('revenue_value').textContent = result.results.annual_revenue.toLocaleString();
+            document.getElementById('ebitda_value').textContent = result.results.ebitda.toLocaleString();
+            document.getElementById('ebit_value').textContent = result.results.ebit.toLocaleString();
+            document.getElementById('nopat_value').textContent = result.results.nopat.toLocaleString();
+            
+            // 비용 구조
+            document.getElementById('raw_costs_value').textContent = result.results.cost_breakdown.raw_costs.toLocaleString();
+            document.getElementById('fixed_costs_value').textContent = result.results.cost_breakdown.fixed_costs.toLocaleString();
+            document.getElementById('variable_costs_value').textContent = result.results.cost_breakdown.variable_costs.toLocaleString();
+            document.getElementById('utility_costs_value').textContent = result.results.cost_breakdown.utility_costs.toLocaleString();
+            document.getElementById('maintenance_costs_value').textContent = result.results.cost_breakdown.maintenance_costs.toLocaleString();
+            
+            results.style.display = 'block';
+            
+            // 요약 결과 페이지로 이동 버튼 추가
+            addSummaryButton(result);
+        }
+        
+        // 요약 결과 페이지로 이동하는 버튼 추가
+        function addSummaryButton(result) {
+            const exportSection = document.querySelector('.export-section');
+            
+            // 기존 요약 버튼이 있다면 제거
+            const existingBtn = document.getElementById('summary-btn');
+            if (existingBtn) {
+                existingBtn.remove();
+            }
+            
+            // 새로운 요약 버튼 생성
+            const summaryBtn = document.createElement('button');
+            summaryBtn.id = 'summary-btn';
+            summaryBtn.className = 'export-btn';
+            summaryBtn.style.background = '#e67e22';
+            summaryBtn.style.marginRight = '10px';
+            summaryBtn.textContent = '📊 요약 결과 보기';
+            summaryBtn.onclick = function() {
+                // 결과 데이터를 URL 파라미터로 전달
+                const dataParam = encodeURIComponent(JSON.stringify(result));
+                window.open(`/summary?data=${dataParam}`, '_blank');
+            };
+            
+            // 버튼을 export-section의 맨 앞에 추가
+            exportSection.insertBefore(summaryBtn, exportSection.firstChild);
+        }
+
+        // 민감도 분석 차트 생성
+        function createSensitivityCharts(sensitivityData) {
+            if (!sensitivityData) return;
+
+            // 기존 차트 제거
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+
+            // 원료가격 민감도 차트
+            if (sensitivityData.price_sensitivity) {
+                const ctx = document.getElementById('priceSensitivityChart').getContext('2d');
+                charts.priceChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sensitivityData.price_sensitivity.map(item => item.change + '%'),
+                        datasets: [{
+                            label: 'NPV (백만원)',
+                            data: sensitivityData.price_sensitivity.map(item => item.npv),
+                            backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 생산량 민감도 차트
+            if (sensitivityData.quantity_sensitivity) {
+                const ctx = document.getElementById('quantitySensitivityChart').getContext('2d');
+                charts.quantityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sensitivityData.quantity_sensitivity.map(item => item.change + '%'),
+                        datasets: [{
+                            label: 'NPV (백만원)',
+                            data: sensitivityData.quantity_sensitivity.map(item => item.npv),
+                            backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // WACC 민감도 차트
+            if (sensitivityData.wacc_sensitivity) {
+                const ctx = document.getElementById('waccSensitivityChart').getContext('2d');
+                charts.waccChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sensitivityData.wacc_sensitivity.map(item => item.change + '%'),
+                        datasets: [{
+                            label: 'NPV (백만원)',
+                            data: sensitivityData.wacc_sensitivity.map(item => item.npv),
+                            backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 엑셀 내보내기
+        async function exportToExcel() {
+            if (!currentResults) {
+                alert('먼저 DCF 계산을 실행해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/export-excel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentResults)
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'dcf_analysis_results.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('엑셀 내보내기 실패');
+                }
+            } catch (error) {
+                alert('엑셀 내보내기 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            setupSliders();
+            updateDebtRatio();
+            calculateWACC();
+            
+            // 기존 항목들에 이벤트 리스너 설정
+            document.querySelectorAll('#raw_materials_container .item-row, #products_container .item-row').forEach(row => {
+                setupItemEventListeners(row);
+            });
+        });
+    </script>
+    
+    <!-- 경제성 계산 데이터 (CSV 대신 JavaScript) -->
+    <script src="js/price-data.js"></script>
+</body>
+</html>
